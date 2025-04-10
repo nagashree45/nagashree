@@ -1,0 +1,90 @@
+<!-- frontend/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Registration System</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>User Registration System</h1>
+        </header>
+        
+        <main>
+            <section class="form-section">
+                <h2 id="form-title">Add New User</h2>
+                <form id="user-form">
+                    <input type="hidden" id="user-id">
+                    
+                    <div class="form-group">
+                        <label for="name">Name</label>
+                        <input type="text" id="name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="dob">Date of Birth</label>
+                        <input type="date" id="dob" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Phone (Optional)</label>
+                        <input type="tel" id="phone">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="address">Address (Optional)</label>
+                        <textarea id="address" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button type="submit" id="submit-btn">Save</button>
+                        <button type="button" id="cancel-btn" style="display:none">Cancel</button>
+                    </div>
+                </form>
+            </section>
+            
+            <section class="users-section">
+                <h2>Registered Users</h2>
+                <div class="table-container">
+                    <table id="users-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Date of Birth</th>
+                                <th>Phone</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-list">
+                            <!-- User data will be inserted here dynamically -->
+                        </tbody>
+                    </table>
+                    <div id="empty-message" style="display:none">
+                        <p>No users registered yet.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2025 User Registration System</p>
+        </footer>
+    </div>
+    
+    <div id="notification" class="notification">
+        <p id="notification-message"></p>
+    </div>
+    
+    <script src="js/script.js"></script>
+</body>
+</html>

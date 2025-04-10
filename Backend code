@@ -1,0 +1,146 @@
+# backend/app.py
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
+from datetime import datetime
+import os
+
+app = Flask(__name__)
+CORS(app)
+
+# Configure database
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///registration.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+# Registration model
+class Registration(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), nullable=False, unique=True)
+    date_of_birth = db.Column(db.Date, nullable=False)
+    phone = db.Column(db.String(20))
+    address = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'email': self.email,
+            'date_of_birth': self.date_of_birth.isoformat() if self.date_of_birth else None,
+            'phone': self.phone,
+            'address': self.address,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+
+# Create tables
+with app.app_context():
+    db.create_all()
+
+# CRUD Operations
+# Create
+@app.route('/api/users', methods=['POST'])
+def create_user():
+    data = request.json
+    
+    # Validation
+    if not data.get('name') or not data.get('email') or not data.get('date_of_birth'):
+        return jsonify({'error': 'Name, email and date of birth are required'}), 400
+    
+    try:
+        # Convert date string to date object
+        date_of_birth = datetime.strptime(data['date_of_birth'], '%Y-%m-%d').date()
+        
+        # Check if email already exists
+        existing_user = Registration.query.filter_by(email=data['email']).first()
+        if existing_user:
+            return jsonify({'error': 'Email already registered'}), 400
+        
+        # Create new user
+        new_user = Registration(
+            name=data['name'],
+            email=data['email'],
+            date_of_birth=date_of_birth,
+            phone=data.get('phone', ''),
+            address=data.get('address', '')
+        )
+        
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify(new_user.to_dict()), 201
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 400
+
+# Read All
+@app.route('/api/users', methods=['GET'])
+def get_all_users():
+    users = Registration.query.all()
+    return jsonify([user.to_dict() for user in users])
+
+# Read One
+@app.route('/api/users/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    user = Registration.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    return jsonify(user.to_dict())
+
+# Update
+@app.route('/api/users/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    user = Registration.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    data = request.json
+    
+    # Validation
+    if 'email' in data and data['email'] != user.email:
+        existing_user = Registration.query.filter_by(email=data['email']).first()
+        if existing_user:
+            return jsonify({'error': 'Email already registered'}), 400
+    
+    try:
+        # Update fields
+        if 'name' in data:
+            user.name = data['name']
+        if 'email' in data:
+            user.email = data['email']
+        if 'date_of_birth' in data:
+            user.date_of_birth = datetime.strptime(data['date_of_birth'], '%Y-%m-%d').date()
+        if 'phone' in data:
+            user.phone = data['phone']
+        if 'address' in data:
+            user.address = data['address']
+        
+        db.session.commit()
+        return jsonify(user.to_dict())
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 400
+
+# Delete
+@app.route('/api/users/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    user = Registration.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    try:
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({'message': f'User {user_id} deleted successfully'})
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 400
+
+if __name__ == '__main__':
+    app.run(debug=True)
